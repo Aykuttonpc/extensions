@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.Diagnostics.Buffering;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -26,7 +25,6 @@ internal sealed class IncomingRequestLogBuffer : IDisposable
     private readonly LogBufferingFilterRuleSelector _ruleSelector;
     private readonly IOptionsMonitor<PerRequestLogBufferingOptions> _options;
     private readonly TimeProvider _timeProvider = TimeProvider.System;
-    private readonly LogBufferingFilterRule[] _filterRules;
     private readonly Lock _bufferSwapLock = new();
     private volatile bool _disposed;
     private ConcurrentQueue<SerializedLogRecord> _activeBuffer = new();
@@ -36,14 +34,12 @@ internal sealed class IncomingRequestLogBuffer : IDisposable
 
     public IncomingRequestLogBuffer(
         IBufferedLogger bufferedLogger,
-        string category,
         LogBufferingFilterRuleSelector ruleSelector,
         IOptionsMonitor<PerRequestLogBufferingOptions> options)
     {
         _bufferedLogger = bufferedLogger;
         _ruleSelector = ruleSelector;
         _options = options;
-        _filterRules = LogBufferingFilterRuleSelector.SelectByCategory(_options.CurrentValue.Rules.ToArray(), category);
     }
 
     public bool TryEnqueue<TState>(LogEntry<TState> logEntry)
@@ -63,7 +59,7 @@ internal sealed class IncomingRequestLogBuffer : IDisposable
                 $"Unsupported type of log state detected: {typeof(TState)}, expected IReadOnlyList<KeyValuePair<string, object?>>");
         }
 
-        if (_ruleSelector.Select(_filterRules, logEntry.LogLevel, logEntry.EventId, attributes) is null)
+        if (_ruleSelector.Select(logEntry.LogLevel, logEntry.EventId, attributes) is null)
         {
             // buffering is not enabled for this log entry,
             // return false to indicate that the log entry should be logged normally.
@@ -147,8 +143,6 @@ internal sealed class IncomingRequestLogBuffer : IDisposable
         }
 
         _disposed = true;
-
-        _ruleSelector.InvalidateCache();
     }
 
     private void TrimExcessRecords()

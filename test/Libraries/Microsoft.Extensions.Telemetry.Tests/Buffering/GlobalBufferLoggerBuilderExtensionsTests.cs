@@ -2,11 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #if NET9_0_OR_GREATER
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Test;
+using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -142,6 +145,198 @@ public class GlobalBufferLoggerBuilderExtensionsTests
         {
             Assert.Equivalent(updatedData, buffer.LastKnownGoodFilterRules, strict: true);
         }
+    }
+
+    [Fact]
+    public void WhenConfigUpdated_AppliesNewRulesToSubsequentLogs()
+    {
+        string jsonConfig =
+            @"
+{
+    ""GlobalLogBuffering"": {
+     ""Rules"": [
+       {
+         ""LogLevel"": ""Information"",
+       },
+     ]
+    }
+}
+";
+
+        using ConfigurationRoot config = TestConfiguration.Create(() => jsonConfig);
+        using ILoggerFactory factory = Utils.CreateLoggerFactory(
+            builder =>
+            {
+                builder.AddFakeLogging();
+                builder.AddGlobalBuffer(config);
+            });
+        Utils.DisposingLoggerFactory dlf = (Utils.DisposingLoggerFactory)factory;
+        FakeLogCollector collector = dlf.ServiceProvider.GetFakeLogCollector();
+        ILogger logger = factory.CreateLogger("Program.MyLogger");
+
+        logger.LogInformation("buffered");
+        Assert.Equal(0, collector.Count);
+
+        jsonConfig =
+@"
+{
+    ""GlobalLogBuffering"": {
+     ""Rules"": [
+       {
+         ""LogLevel"": ""Debug"",
+       },
+     ]
+    }
+}
+";
+        config.Reload();
+
+        logger.LogInformation("not buffered");
+        Assert.Equal(["not buffered"], collector.GetSnapshot().Select(record => record.Message));
+    }
+
+    [Fact]
+    public void WhenConfigUpdatedWhileSelectingRule_DoesNotThrow()
+    {
+        string jsonConfig =
+            @"
+{
+    ""GlobalLogBuffering"": {
+     ""Rules"": [
+       {
+         ""LogLevel"": ""Information"",
+         ""Attributes"": [
+           {
+             ""key"": ""region"",
+             ""value"": ""westus2""
+           }
+         ]
+       },
+       {
+         ""LogLevel"": ""Information"",
+       },
+     ]
+    }
+}
+";
+
+        using ConfigurationRoot config = TestConfiguration.Create(() => jsonConfig);
+        using ILoggerFactory factory = Utils.CreateLoggerFactory(
+            builder =>
+            {
+                builder.AddFakeLogging();
+                builder.AddGlobalBuffer(config);
+            });
+        Utils.DisposingLoggerFactory dlf = (Utils.DisposingLoggerFactory)factory;
+        FakeLogCollector collector = dlf.ServiceProvider.GetFakeLogCollector();
+        ILogger logger = factory.CreateLogger("Program.MyLogger");
+
+        // the options are reloaded while the rules are being matched against the log record attributes:
+        var state = new CallbackState(() =>
+        {
+            jsonConfig =
+@"
+{
+    ""GlobalLogBuffering"": {
+     ""Rules"": [
+       {
+         ""LogLevel"": ""Warning"",
+       },
+     ]
+    }
+}
+";
+            config.Reload();
+        });
+
+        Exception? exception = Record.Exception(() => logger.Log(LogLevel.Information, 0, state, null, (_, _) => "message"));
+
+        // the record is buffered by the attribute-less rule which was in effect when logging started:
+        Assert.Null(exception);
+        Assert.Equal(0, collector.Count);
+
+        dlf.ServiceProvider.GetRequiredService<GlobalLogBuffer>().Flush();
+
+        Assert.Equal(["message"], collector.GetSnapshot().Select(record => record.Message));
+    }
+
+    [Fact]
+    public void CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel()
+    {
+        using ILoggerFactory factory = Utils.CreateLoggerFactory(
+            builder =>
+            {
+                builder.AddFakeLogging();
+                builder.AddGlobalBuffer(options =>
+                {
+                    options.AutoFlushDuration = TimeSpan.Zero;
+                    options.Rules.Add(new LogBufferingFilterRule(categoryName: "Program.BufferedLogger"));
+                });
+            });
+        Utils.DisposingLoggerFactory dlf = (Utils.DisposingLoggerFactory)factory;
+        FakeLogCollector collector = dlf.ServiceProvider.GetFakeLogCollector();
+
+        factory.CreateLogger("Program.OtherLogger").LogInformation("not buffered");
+        factory.CreateLogger("Program.BufferedLogger").LogInformation("buffered");
+
+        Assert.Equal(["not buffered"], collector.GetSnapshot().Select(record => record.Message));
+
+        dlf.ServiceProvider.GetRequiredService<GlobalLogBuffer>().Flush();
+
+        Assert.Equal(["not buffered", "buffered"], collector.GetSnapshot().Select(record => record.Message));
+    }
+
+    [Fact]
+    public void CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel()
+    {
+        using ILoggerFactory factory = Utils.CreateLoggerFactory(
+            builder =>
+            {
+                builder.AddFakeLogging();
+                builder.AddGlobalBuffer(options =>
+                {
+                    options.AutoFlushDuration = TimeSpan.Zero;
+                    options.Rules.Add(new LogBufferingFilterRule(categoryName: "Program.BufferedLogger"));
+                });
+            });
+        Utils.DisposingLoggerFactory dlf = (Utils.DisposingLoggerFactory)factory;
+        FakeLogCollector collector = dlf.ServiceProvider.GetFakeLogCollector();
+
+        factory.CreateLogger("Program.BufferedLogger").LogInformation("buffered");
+        factory.CreateLogger("Program.OtherLogger").LogInformation("not buffered");
+
+        Assert.Equal(["not buffered"], collector.GetSnapshot().Select(record => record.Message));
+    }
+
+    private sealed class CallbackState : IReadOnlyList<KeyValuePair<string, object?>>
+    {
+        private Action? _onFirstRead;
+
+        public CallbackState(Action onFirstRead)
+        {
+            _onFirstRead = onFirstRead;
+        }
+
+        public int Count => 1;
+
+        public KeyValuePair<string, object?> this[int index]
+        {
+            get
+            {
+                Action? onFirstRead = _onFirstRead;
+                _onFirstRead = null;
+                onFirstRead?.Invoke();
+
+                return new("region", "eastus");
+            }
+        }
+
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
+        {
+            yield return this[0];
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
 #endif

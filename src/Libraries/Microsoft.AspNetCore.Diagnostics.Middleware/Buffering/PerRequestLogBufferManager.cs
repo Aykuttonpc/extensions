@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #if NET9_0_OR_GREATER
 
+using System;
+using System.Collections.Concurrent;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Buffering;
@@ -10,24 +13,30 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Diagnostics.Buffering;
 
-internal sealed class PerRequestLogBufferManager : PerRequestLogBuffer
+internal sealed class PerRequestLogBufferManager : PerRequestLogBuffer, IDisposable
 {
     internal readonly IOptionsMonitor<PerRequestLogBufferingOptions> Options;
 
     private readonly GlobalLogBuffer _globalBuffer;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly LogBufferingFilterRuleSelector _ruleSelector;
+    private readonly IDisposable? _optionsChangeTokenRegistration;
+
+    private volatile ConcurrentDictionary<string, LogBufferingFilterRuleSelector> _ruleSelectors = new();
 
     public PerRequestLogBufferManager(
         GlobalLogBuffer globalBuffer,
         IHttpContextAccessor httpContextAccessor,
-        LogBufferingFilterRuleSelector ruleSelector,
         IOptionsMonitor<PerRequestLogBufferingOptions> options)
     {
         _globalBuffer = globalBuffer;
         _httpContextAccessor = httpContextAccessor;
-        _ruleSelector = ruleSelector;
         Options = options;
+        _optionsChangeTokenRegistration = options.OnChange(_ => _ruleSelectors = new());
+    }
+
+    public void Dispose()
+    {
+        _optionsChangeTokenRegistration?.Dispose();
     }
 
     public override void Flush()
@@ -48,7 +57,7 @@ internal sealed class PerRequestLogBufferManager : PerRequestLogBuffer
         IncomingRequestLogBufferHolder? bufferHolder =
             httpContext.RequestServices.GetService<IncomingRequestLogBufferHolder>();
         IncomingRequestLogBuffer? buffer = bufferHolder?.GetOrAdd(category, _ =>
-            new IncomingRequestLogBuffer(bufferedLogger, category, _ruleSelector, Options));
+            new IncomingRequestLogBuffer(bufferedLogger, GetRuleSelector(category), Options));
 
         if (buffer is null)
         {
@@ -57,5 +66,10 @@ internal sealed class PerRequestLogBufferManager : PerRequestLogBuffer
 
         return buffer.TryEnqueue(logEntry);
     }
+
+    private LogBufferingFilterRuleSelector GetRuleSelector(string category) =>
+        _ruleSelectors.GetOrAdd(category, static (category, options) => new LogBufferingFilterRuleSelector(
+            LogBufferingFilterRuleSelector.SelectByCategory(options.CurrentValue.Rules.ToArray(), category)),
+            Options);
 }
 #endif

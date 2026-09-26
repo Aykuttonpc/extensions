@@ -24,9 +24,13 @@ internal sealed class LogBufferingFilterRuleSelector
     private static readonly ObjectPool<List<LogBufferingFilterRule>> _rulePool =
         PoolFactory.CreateListPool<LogBufferingFilterRule>();
 
-    private readonly ObjectPool<List<LogBufferingFilterRule>> _cachedRulePool =
-        PoolFactory.CreateListPool<LogBufferingFilterRule>();
-    private readonly ConcurrentDictionary<(LogLevel, EventId), List<LogBufferingFilterRule>> _ruleCache = new();
+    private readonly LogBufferingFilterRule[] _rules;
+    private readonly ConcurrentDictionary<(LogLevel, EventId), LogBufferingFilterRule[]> _ruleCache = new();
+
+    public LogBufferingFilterRuleSelector(LogBufferingFilterRule[] rules)
+    {
+        _rules = rules;
+    }
 
     public static LogBufferingFilterRule[] SelectByCategory(IList<LogBufferingFilterRule> rules, string category)
     {
@@ -50,36 +54,37 @@ internal sealed class LogBufferingFilterRuleSelector
         }
     }
 
-    public void InvalidateCache()
-    {
-        foreach (((LogLevel, EventId) key, List<LogBufferingFilterRule> value) in _ruleCache)
-        {
-            _cachedRulePool.Return(value);
-        }
-
-        _ruleCache.Clear();
-    }
-
     public LogBufferingFilterRule? Select(
-        IList<LogBufferingFilterRule> rules,
         LogLevel logLevel,
         EventId eventId,
         IReadOnlyList<KeyValuePair<string, object?>>? attributes)
     {
-        // 1. select rule candidates by log level and event id from the cache
-        List<LogBufferingFilterRule> ruleCandidates = _ruleCache.GetOrAdd((logLevel, eventId), _ =>
+        if (_rules.Length == 0)
         {
-            List<LogBufferingFilterRule> candidates = _cachedRulePool.Get();
-            foreach (LogBufferingFilterRule rule in rules)
-            {
-                if (IsMatch(rule, logLevel, eventId))
-                {
-                    candidates.Add(rule);
-                }
-            }
+            return null;
+        }
 
-            return candidates;
-        });
+        // 1. select rule candidates by log level and event id from the cache
+        LogBufferingFilterRule[] ruleCandidates = _ruleCache.GetOrAdd((logLevel, eventId), static (key, rules) =>
+        {
+            List<LogBufferingFilterRule> candidates = _rulePool.Get();
+            try
+            {
+                foreach (LogBufferingFilterRule rule in rules)
+                {
+                    if (IsMatch(rule, key.Item1, key.Item2))
+                    {
+                        candidates.Add(rule);
+                    }
+                }
+
+                return candidates.ToArray();
+            }
+            finally
+            {
+                _rulePool.Return(candidates);
+            }
+        }, _rules);
 
         // 2. select the best rule from the candidates by attributes
         LogBufferingFilterRule? currentBest = null;
