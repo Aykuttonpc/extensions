@@ -1,0 +1,59 @@
+{
+  "upstream": "dotnet/extensions",
+  "number": 7486,
+  "also_fixes": [7383],
+  "status": "pushed",
+  "verification": "full",
+  "branch": "scout/extensions-7486-buffer-rule-cache",
+  "base_sha": "fcd5b6b3fe0c19332932fd5d08bef82fe99ec06a",
+  "pushed": true,
+  "changed_files": [
+    "src/Libraries/Microsoft.Extensions.Telemetry/Buffering/LogBufferingFilterRuleSelector.cs",
+    "src/Libraries/Microsoft.Extensions.Telemetry/Buffering/GlobalBuffer.cs",
+    "src/Libraries/Microsoft.Extensions.Telemetry/Buffering/GlobalLogBufferManager.cs",
+    "src/Libraries/Microsoft.Extensions.Telemetry/Buffering/GlobalBufferLoggingBuilderExtensions.cs",
+    "src/Libraries/Microsoft.AspNetCore.Diagnostics.Middleware/Buffering/IncomingRequestLogBuffer.cs",
+    "src/Libraries/Microsoft.AspNetCore.Diagnostics.Middleware/Buffering/PerRequestLogBufferManager.cs",
+    "test/Libraries/Microsoft.Extensions.Telemetry.Tests/Buffering/GlobalBufferLoggerBuilderExtensionsTests.cs",
+    "test/Libraries/Microsoft.Extensions.Telemetry.Tests/Buffering/LogBufferingFilterRuleTests.cs",
+    "test/Libraries/Microsoft.AspNetCore.Diagnostics.Middleware.Tests/Buffering/PerIncomingRequestLoggingBuilderExtensionsTests.cs"
+  ],
+  "diff_stats": "+498 -56 (src: +57 -50, tests: +441 -6)",
+  "new_tests": [
+    "Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel",
+    "Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel",
+    "Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdatedWhileSelectingRule_DoesNotThrow",
+    "Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdated_AppliesNewRulesToSubsequentLogs",
+    "Microsoft.Extensions.Diagnostics.Buffering.Test.LogBufferingFilterRuleTests.SelectsOnlyFromOwnRules",
+    "Microsoft.AspNetCore.Diagnostics.Logging.Test.PerIncomingRequestLoggingBuilderExtensionsTests.CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel",
+    "Microsoft.AspNetCore.Diagnostics.Logging.Test.PerIncomingRequestLoggingBuilderExtensionsTests.CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel",
+    "Microsoft.AspNetCore.Diagnostics.Logging.Test.PerIncomingRequestLoggingBuilderExtensionsTests.WhenConfigUpdated_NextRequestUsesNewRules",
+    "Microsoft.AspNetCore.Diagnostics.Logging.Test.PerIncomingRequestLoggingBuilderExtensionsTests.PerRequestRules_AreNotAffectedByGlobalRules",
+    "Microsoft.AspNetCore.Diagnostics.Logging.Test.PerIncomingRequestLoggingBuilderExtensionsTests.WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow"
+  ],
+  "commands": [
+    {"cmd": "BEFORE fix: src/ and LogBufferingFilterRuleTests.cs checked out at BASE, new e2e tests kept; dotnet build test/Libraries/Microsoft.Extensions.Telemetry.Tests -f net10.0 && dotnet artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll --filter-class \"*GlobalBufferLoggerBuilderExtensionsTests\"", "result": "fail", "output_tail": "The class has 8 tests (4 existing + 4 new). 3 new tests fail at BASE:\nfailed ...CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel: Expected [\"not buffered\"] Actual [] (the other category was buffered by the first category's cached rule)\nfailed ...CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel: Expected [\"not buffered\"] Actual [\"not buffered\", \"buffered\"] (the rule was ignored because an empty candidate list was cached)\nfailed ...WhenConfigUpdatedWhileSelectingRule_DoesNotThrow: Actual: System.InvalidOperationException: Collection was modified; enumeration operation may not execute.\nWhenConfigUpdated_AppliesNewRulesToSubsequentLogs passes at BASE (regression guard for the new selector swap).\nTest run summary: Failed!\n  total: 8\n  failed: 3\n  succeeded: 5"},
+    {"cmd": "BEFORE fix (same tree): dotnet build test/Libraries/Microsoft.AspNetCore.Diagnostics.Middleware.Tests -f net10.0 && dotnet artifacts/bin/Microsoft.AspNetCore.Diagnostics.Middleware.Tests/Debug/net10.0/Microsoft.AspNetCore.Diagnostics.Middleware.Tests.dll --filter-class \"*PerIncomingRequestLoggingBuilderExtensionsTests\"", "result": "fail", "output_tail": "The class has 10 tests (5 existing + 5 new). 4 new tests fail at BASE:\nfailed ...PerRequestRules_AreNotAffectedByGlobalRules: Expected [\"not buffered\"] Actual [\"not buffered\", \"buffered\"]\nfailed ...CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel: Expected [\"not buffered\"] Actual []\nfailed ...CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel: Expected [\"not buffered\"] Actual [\"not buffered\", \"buffered\"]\nfailed ...WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow: Actual: System.InvalidOperationException: Collection was modified; enumeration operation may not execute.\nWhenConfigUpdated_NextRequestUsesNewRules passes at BASE (regression guard for the new per-category cache).\nTest run summary: Failed!\n  total: 10\n  failed: 4\n  succeeded: 6"},
+    {"cmd": "Mutation check: PerRequestLogBufferManager OnChange temporarily set to a no-op (naive cache-forever); dotnet artifacts/bin/Microsoft.AspNetCore.Diagnostics.Middleware.Tests/Debug/net10.0/Microsoft.AspNetCore.Diagnostics.Middleware.Tests.dll --filter-method \"*WhenConfigUpdated_NextRequestUsesNewRules\" (then restored)", "result": "fail", "output_tail": "  Expected: <generated> [\"not buffered\"]\n  Actual:   string[]    []\nTest run summary: Failed!\n  total: 1\n  failed: 1"},
+    {"cmd": "./build.sh", "result": "pass", "output_tail": "    165 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:10:48.49"},
+    {"cmd": "AFTER fix: dotnet artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/<tfm>/Microsoft.Extensions.Telemetry.Tests.dll --report-trx --report-trx-filename Microsoft.Extensions.Telemetry.Tests.<tfm>.trx --results-directory <scratch>/trx2  (tfm = net8.0, net9.0, net10.0; unfiltered)", "result": "pass", "output_tail": "net8.0: Passed! total: 324 failed: 0 succeeded: 324\nnet9.0: Passed! total: 345 failed: 0 succeeded: 345\nnet10.0: Passed! total: 345 failed: 0 succeeded: 345"},
+    {"cmd": "AFTER fix: dotnet artifacts/bin/Microsoft.AspNetCore.Diagnostics.Middleware.Tests/Debug/<tfm>/Microsoft.AspNetCore.Diagnostics.Middleware.Tests.dll --report-trx --report-trx-filename Microsoft.AspNetCore.Diagnostics.Middleware.Tests.<tfm>.trx --results-directory <scratch>/trx2  (tfm = net8.0, net9.0, net10.0; unfiltered)", "result": "pass", "output_tail": "net8.0: Passed! total: 173 failed: 0 succeeded: 173\nnet9.0: Passed! total: 192 failed: 0 succeeded: 192\nnet10.0: Passed! total: 192 failed: 0 succeeded: 192"}
+  ],
+  "pr_title": "Scope log buffering rule cache to each rule set",
+  "pr_summary_en": "Fixes #7486. Fixes #7383. LogBufferingFilterRuleSelector was a DI singleton shared by every per-category global buffer and every per-request buffer, but it cached rule candidates only by (LogLevel, EventId). The first category to log at a level decided buffering for all categories, and global and per-request rule sets overwrote each other. It also cached pooled lists that InvalidateCache cleared while other threads were enumerating them, and every per-request buffer called it on dispose, so logging calls threw \"Collection was modified\" under load. A selector is now bound to one category-filtered rule set, caches immutable arrays and returns immediately when it has no rules. Each global buffer owns its selector and swaps in a new one when options change. PerRequestLogBufferManager keeps one selector per category, reuses it across requests and replaces the whole map when the per-request options change, so ending a request no longer touches shared state. The new tests cover both category orderings for global and per-request buffers, global vs per-request rules, options reload for both buffer kinds, options reload during rule selection and a request ending during another request's rule selection.",
+  "risks": "Microsoft.AspNetCore.Diagnostics.Middleware uses Microsoft.Extensions.Telemetry internals through InternalsVisibleTo, and this change alters those internals (the constructors of GlobalLogBufferManager, GlobalBuffer, PerRequestLogBufferManager and IncomingRequestLogBuffer, and LogBufferingFilterRuleSelector is no longer registered in DI). The two packages must therefore be upgraded together; they ship from the same build. No public API or API baseline file changed. PerRequestLogBufferManager now caches one selector per logger category. That key space is the set of categories the app creates loggers for, which ILoggerFactory already caches per category, so it is bounded the same way. PerRequestLogBufferManager now implements IDisposable to release its IOptionsMonitor.OnChange registration; it is a DI singleton, so the container disposes it. Requests already in flight when per-request options change keep the selector they started with until they end.",
+  "thread": {
+    "source": "page",
+    "checked_at": "2026-09-27",
+    "comments_read": 0,
+    "comments_total": 0,
+    "decision": "go",
+    "stop_reason": null,
+    "comments": [],
+    "claims": [],
+    "linked_prs": [],
+    "maintainer_guidance": [],
+    "community_input_used": []
+  },
+  "failure_reason": null
+}
