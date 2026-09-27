@@ -1,0 +1,31 @@
+{
+  "issue": "dotnet/extensions#7486",
+  "source": "page",
+  "url": "https://github.com/dotnet/extensions/issues/7486",
+  "title": "LogBuffering with CategoryName only rule ignores the rule for previously emitted log levels",
+  "state": "open",
+  "author": "?",
+  "assignees": [],
+  "labels": [
+    "area-telemetry",
+    "bug",
+    "untriaged"
+  ],
+  "milestone": null,
+  "thumbs_up": 0,
+  "comments_total": 0,
+  "comments_read": 0,
+  "comments": [],
+  "claims": [],
+  "linked_prs": [],
+  "maintainer_guidance": [],
+  "events": [],
+  "mechanical_stops": [],
+  "verifier_note": "api.github.com and github.com are 403 in this sandbox; the r.jina.ai markdown view held only the issue body, so the page was re-read as HTML (r.jina.ai X-Return-Format: html) and the embedded GraphQL payload was parsed: state OPEN, assignedActors [], closedByPullRequestsReferences [], 'No one assigned', 'No branches or pull requests', timeline hasNextPage=false with all items loaded, no IssueComment and no cross-referenced PR items.",
+  "timeline_total": 3,
+  "timeline_events": [
+    "2026-04-24 labeled bug/untriaged/area-telemetry by LironMat, github-actions"
+  ],
+  "decision": "go",
+  "checked_at": "2026-09-27"
+}

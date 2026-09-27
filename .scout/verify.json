@@ -1,0 +1,184 @@
+{
+  "upstream": "dotnet/extensions",
+  "number": 7486,
+  "also_fixes": [
+    7383
+  ],
+  "branch": "scout/extensions-7486-buffer-rule-cache",
+  "code_under_test": "364c4922 (HEAD~1); HEAD d5c9cb9a adds only .scout/result.json",
+  "base_sha": "fcd5b6b3fe0c19332932fd5d08bef82fe99ec06a",
+  "verdict": "pass",
+  "fails_without_fix": true,
+  "passes_with_fix": true,
+  "new_regressions": [],
+  "preexisting_failures": [],
+  "flaky": false,
+  "tfms_with_new_tests": [
+    "net9.0",
+    "net10.0"
+  ],
+  "tfm_note": "The buffering code and its tests compile only for NET9_0_OR_GREATER. net8.0 TRX files have 0 of the new tests (Telemetry.Tests 324 vs 345, Middleware.Tests 173 vs 192), as expected.",
+  "without_fix_failures": {
+    "GlobalBufferLoggerBuilderExtensionsTests (net9.0, net10.0)": {
+      "CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel": "Failed: Expected [\"not buffered\"] Actual [] (the other category's record was buffered by the first category's cached candidate)",
+      "CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel": "Failed: Expected [\"not buffered\"] Actual [\"not buffered\",\"buffered\"] (the category rule was ignored because an empty candidate list was cached)",
+      "WhenConfigUpdatedWhileSelectingRule_DoesNotThrow": "Failed: System.InvalidOperationException: Collection was modified; enumeration operation may not execute. at List`1.Enumerator.MoveNext -> LogBufferingFilterRuleSelector.Select -> GlobalBuffer.TryEnqueue"
+    },
+    "PerIncomingRequestLoggingBuilderExtensionsTests (net9.0, net10.0)": {
+      "CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel": "Failed: Expected [\"not buffered\"] Actual []",
+      "CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel": "Failed: Expected [\"not buffered\"] Actual [\"not buffered\",\"buffered\"]",
+      "PerRequestRules_AreNotAffectedByGlobalRules": "Failed: Expected [\"not buffered\"] Actual [\"not buffered\",\"buffered\"]",
+      "WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow": "Failed: System.InvalidOperationException: Collection was modified; enumeration operation may not execute. at LogBufferingFilterRuleSelector.Select -> IncomingRequestLogBuffer.TryEnqueue"
+    },
+    "reason_check": "All 7 cases x 2 TFMs fail with the issues' symptoms: wrong buffering decision (issue 7486, global and per-request rule sets sharing one cache) or 'Collection was modified' thrown from LogBufferingFilterRuleSelector.Select (issue 7383). None is a setup error. The without-fix build compiled cleanly (0 Error(s))."
+  },
+  "guard_tests": {
+    "GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdated_AppliesNewRulesToSubsequentLogs": "without fix: Passed (net9.0, net10.0); with fix: Passed",
+    "PerIncomingRequestLoggingBuilderExtensionsTests.WhenConfigUpdated_NextRequestUsesNewRules": "without fix: Passed (net9.0, net10.0); with fix: Passed",
+    "LogBufferingFilterRuleTests.SelectsOnlyFromOwnRules": "not runnable without fix (new constructor); with fix: Passed on net9.0 and net10.0 (full run and restored run)"
+  },
+  "extra_checks": {
+    "a_api_baselines": "No *.json file changed in BASE..HEAD~1. The only added/removed 'public' members (LogBufferingFilterRuleSelector ctor, removed InvalidateCache, PerRequestLogBufferManager.Dispose) sit on internal sealed types. ApiChief baselines regenerated from the with-fix net10.0 builds of both libraries match the committed Microsoft.Extensions.Telemetry.json and Microsoft.AspNetCore.Diagnostics.Middleware.json except the assembly version header and one trailing-whitespace difference, both already present at BASE. So no public API change. The ./build.sh run had analyzers on: eng/MSBuild/Analyzers.props enables RunAnalyzers/EnforceCodeStyleInBuild unless SkipAnalyzers=true, and SkipAnalyzers is set nowhere in the build log. Microsoft.Analyzers.Local/Extra were built and applied, warnings count unchanged (165), 0 errors. The JSON API baselines are not checked by ./build.sh; they are produced by scripts/MakeApiBaselines.ps1 (ApiChief), which is why ApiChief was run separately here.",
+    "b_race_tests_deterministic": "Deterministic. Both tests log with a custom CallbackState (IReadOnlyList<KeyValuePair>) whose indexer runs a one-shot callback on its first read, i.e. while LogBufferingFilterRuleSelector.Select is enumerating the candidate list and matching attributes. The callback runs synchronously on the same thread: config.Reload() in WhenConfigUpdatedWhileSelectingRule_DoesNotThrow, and otherRequest.Dispose() (a scope whose IncomingRequestLogBuffer.Dispose used to call the shared InvalidateCache) in WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow. No threads or timing are involved. At BASE this clears the pooled List being enumerated, so they fail every time; with the fix they passed 20/20 each on net9.0 and net10.0.",
+    "c_remaining_uses": "grep over src, test and bench (there is no samples folder): LogBufferingFilterRuleSelector appears only in GlobalBuffer.cs, PerRequestLogBufferManager.cs, IncomingRequestLogBuffer.cs, its own file, and LogBufferingFilterRuleTests.cs, all with the new shape (ctor(rules), Select(level, eventId, attrs)). No DI registration of LogBufferingFilterRuleSelector remains. The remaining InvalidateCache hits are LogSamplingRuleSelector/RandomProbabilisticSampler, a different class that this change does not touch. Constructor call sites: new GlobalBuffer only in GlobalLogBufferManager (both #if branches updated); GlobalLogBufferManager and PerRequestLogBufferManager are created only by DI (TryAddSingleton / ActivatorUtilities.CreateInstance(sp, globalBufferManager)); new IncomingRequestLogBuffer only in PerRequestLogBufferManager. No test or bench constructs them directly. All of these projects, including bench/Libraries/Microsoft.Extensions.Telemetry.PerformanceTests and Microsoft.AspNetCore.Diagnostics.Middleware.PerformanceTests, are built by ./build.sh (0 Error(s)), and Telemetry built for net462/netstandard2.0/net8.0/net9.0/net10.0.",
+    "d_perrequest_manager_dispose": "Registration: TryAddSingleton(sp => ActivatorUtilities.CreateInstance<PerRequestLogBufferManager>(sp, globalBufferManager)) plus TryAddSingleton<LogBuffer>(sp => sp.GetRequiredService<PerRequestLogBufferManager>()) and TryAddSingleton<PerRequestLogBuffer>(same). Microsoft.Extensions.DependencyInjection captures a factory result for disposal once per registration that resolves it. A console probe against the built assemblies (net10.0) resolved ILoggerFactory, PerRequestLogBuffer, LogBuffer and the manager, then counted the manager in the root scope's _disposables list: it is captured 3 times. So the container disposes it up to 3 times (once per forwarding registration that was resolved), not exactly once. This is harmless: Dispose only calls OptionsMonitor<T>.ChangeTrackerDisposable.Dispose, which removes the listener and is idempotent. provider.Dispose() plus an extra manual Dispose() threw nothing. GlobalLogBufferManager is registered with the same forwarding pattern at BASE. The with-fix test outputs (6 full runs) contain no ObjectDisposedException apart from the existing test name RequestHeadersEnricher_ObjectDisposedExceptionIsHandled_DoesNotEnrich, and no leaked-registration warnings."
+  },
+  "output_gate": "with fix: 6 trx, total=1571 executed=1571 passed=1571 failed=0 error=0 timeout=0 aborted=0\n  CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel: with fix ['Passed', 'Passed', 'Passed', 'Passed'] | without fix ['Failed', 'Failed', 'Failed', 'Failed']\n  CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel: with fix ['Passed', 'Passed', 'Passed', 'Passed'] | without fix ['Failed', 'Failed', 'Failed', 'Failed']\n  WhenConfigUpdatedWhileSelectingRule_DoesNotThrow: with fix ['Passed', 'Passed'] | without fix ['Failed', 'Failed']\n  PerRequestRules_AreNotAffectedByGlobalRules: with fix ['Passed', 'Passed'] | without fix ['Failed', 'Failed']\n  WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow: with fix ['Passed', 'Passed'] | without fix ['Failed', 'Failed']\n\nOUTPUT GATE: PASS",
+  "output_gate_duplicate_names": "The gate matches each --new-tests entry as a substring of the TRX testName (fully qualified). CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel and CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel exist in both GlobalBufferLoggerBuilderExtensionsTests and PerIncomingRequestLoggingBuilderExtensionsTests, so each entry collects 4 results (2 classes x net9.0/net10.0). It requires all of them to pass with the fix, but only ANY of them to fail without the fix. I checked that stronger condition myself: all 4 copies of each name show 'Failed' without the fix (the gate's own printout lists ['Failed','Failed','Failed','Failed']).",
+  "thread": {
+    "source": "page",
+    "decision": "go",
+    "stop_reason": null,
+    "new_since_builder": [],
+    "checked_at": "2026-09-27",
+    "comments_read": 0,
+    "comments_total": 0,
+    "comments": [],
+    "claims": [],
+    "linked_prs": [],
+    "maintainer_guidance": [],
+    "community_input_used": [],
+    "issues": {
+      "7486": {
+        "issue": "dotnet/extensions#7486",
+        "source": "page",
+        "state": "open",
+        "title": "LogBuffering with CategoryName only rule ignores the rule for previously emitted log levels",
+        "assignees": [],
+        "labels": [
+          "area-telemetry",
+          "bug",
+          "untriaged"
+        ],
+        "milestone": null,
+        "comments_total": 0,
+        "comments_read": 0,
+        "comments": [],
+        "claims": [],
+        "linked_prs": [],
+        "maintainer_guidance": [],
+        "timeline_total": 3,
+        "timeline_events": [
+          "2026-04-24 labeled bug/untriaged/area-telemetry by LironMat, github-actions"
+        ],
+        "mechanical_stops": [],
+        "verifier_note": "api.github.com and github.com are 403 in this sandbox; the r.jina.ai markdown view held only the issue body, so the page was re-read as HTML (r.jina.ai X-Return-Format: html) and the embedded GraphQL payload was parsed: state OPEN, assignedActors [], closedByPullRequestsReferences [], 'No one assigned', 'No branches or pull requests', timeline hasNextPage=false with all items loaded, no IssueComment and no cross-referenced PR items."
+      },
+      "7383": {
+        "issue": "dotnet/extensions#7383",
+        "source": "page",
+        "state": "open",
+        "title": "Thread-safety bug: `LogBufferingFilterRuleSelector.Select` races with `InvalidateCache`, causing `InvalidOperationException - Collection was modified; enumeration operation may not execute`",
+        "assignees": [],
+        "labels": [
+          "area-telemetry",
+          "bug",
+          "untriaged"
+        ],
+        "milestone": null,
+        "comments_total": 0,
+        "comments_read": 0,
+        "comments": [],
+        "claims": [],
+        "linked_prs": [],
+        "maintainer_guidance": [],
+        "timeline_total": 4,
+        "timeline_events": [
+          "2026-03-10 labeled bug/untriaged/area-telemetry by Sorttech, github-actions",
+          "2026-03-10 renamed title by Sorttech"
+        ],
+        "mechanical_stops": [],
+        "verifier_note": "api.github.com and github.com are 403 in this sandbox; the r.jina.ai markdown view held only the issue body, so the page was re-read as HTML (r.jina.ai X-Return-Format: html) and the embedded GraphQL payload was parsed: state OPEN, assignedActors [], closedByPullRequestsReferences [], 'No one assigned', 'No branches or pull requests', timeline hasNextPage=false with all items loaded, no IssueComment and no cross-referenced PR items."
+      }
+    },
+    "note": "Nothing new since the builder: both issues are still open, with 0 comments, no assignee, no linked PR or branch, and only the original labeled/renamed events. No cross-reference from the fork appears."
+  },
+  "commands": [
+    {
+      "cmd": "python3 issue-thread.py dotnet/extensions#7486 --staleness-days 60 --json .scout/thread.json (+ r.jina.ai X-Return-Format: html page read, GraphQL payload parsed)",
+      "result": "pass",
+      "output_tail": "THREAD CHECK: READ, exit 0. state OPEN, 0 comments, no assignee, no linked PR/branch, timeline = 3 labeled events (2026-04-24)."
+    },
+    {
+      "cmd": "python3 issue-thread.py dotnet/extensions#7383 --staleness-days 60 --json .scout/thread-7383.json (+ same HTML page read)",
+      "result": "pass",
+      "output_tail": "THREAD CHECK: READ, exit 0. state OPEN, 0 comments, no assignee, no linked PR/branch, timeline = 3 labeled + 1 renamed-title event (2026-03-10)."
+    },
+    {
+      "cmd": "GIT_LFS_SKIP_SMUDGE=1 git clone --filter=blob:none https://github.com/Aykuttonpc/extensions v && git checkout scout/extensions-7486-buffer-rule-cache && git merge-base HEAD origin/scout/upstream-main && git diff --stat fcd5b6b3..HEAD~1 && git diff --stat HEAD~1..HEAD",
+      "result": "pass",
+      "output_tail": "merge-base = fcd5b6b3fe0c19332932fd5d08bef82fe99ec06a (= BASE). BASE..HEAD~1: exactly the 9 expected files, 498 insertions(+), 56 deletions(-). HEAD~1..HEAD: only .scout/result.json."
+    },
+    {
+      "cmd": "./build.sh 2>&1 | tee .scout/logs/with-fix/build.log   (branch code)",
+      "result": "pass",
+      "output_tail": "    0 Error(s)\n\nTime Elapsed 00:13:22.93"
+    },
+    {
+      "cmd": "for tfm in net8.0 net9.0 net10.0: dotnet artifacts/bin/<P>/Debug/<tfm>/<P>.dll --report-trx --report-trx-filename <P>.<tfm>.trx --results-directory .scout/logs/with-fix/<P>   (P = Microsoft.Extensions.Telemetry.Tests, Microsoft.AspNetCore.Diagnostics.Middleware.Tests; unfiltered)",
+      "result": "pass",
+      "output_tail": "Microsoft.Extensions.Telemetry.Tests net8.0: total: 324 failed: 0 succeeded: 324\nMicrosoft.Extensions.Telemetry.Tests net9.0: total: 345 failed: 0 succeeded: 345\nMicrosoft.Extensions.Telemetry.Tests net10.0: total: 345 failed: 0 succeeded: 345\nMicrosoft.AspNetCore.Diagnostics.Middleware.Tests net8.0: total: 173 failed: 0 succeeded: 173\nMicrosoft.AspNetCore.Diagnostics.Middleware.Tests net9.0: total: 192 failed: 0 succeeded: 192\nMicrosoft.AspNetCore.Diagnostics.Middleware.Tests net10.0: total: 192 failed: 0 succeeded: 192"
+    },
+    {
+      "cmd": "git checkout BASE -- <6 src files> test/Libraries/Microsoft.Extensions.Telemetry.Tests/Buffering/LogBufferingFilterRuleTests.cs && ./build.sh 2>&1 | tee .scout/logs/without-fix/build.log",
+      "result": "pass",
+      "output_tail": "    0 Error(s)\n\nTime Elapsed 00:02:08.46"
+    },
+    {
+      "cmd": "WITHOUT fix, tfm in net9.0 net10.0: dotnet artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/<tfm>/Microsoft.Extensions.Telemetry.Tests.dll --filter-class '*.GlobalBufferLoggerBuilderExtensionsTests' --report-trx ... --results-directory .scout/logs/without-fix/Microsoft.Extensions.Telemetry.Tests",
+      "result": "fail",
+      "output_tail": "net9.0:\nfailed CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel\nfailed CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel\nfailed WhenConfigUpdatedWhileSelectingRule_DoesNotThrow\ntotal: 8\nfailed: 3\nsucceeded: 5\nnet10.0:\nfailed WhenConfigUpdatedWhileSelectingRule_DoesNotThrow\nfailed CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel\nfailed CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel\ntotal: 8\nfailed: 3\nsucceeded: 5\nCategorySpecificRule_DoesNotApply...: Expected [\"not buffered\"] Actual []; CategorySpecificRule_AppliesAfter...: Expected [\"not buffered\"] Actual [\"not buffered\",\"buffered\"]; WhenConfigUpdatedWhileSelectingRule_DoesNotThrow: System.InvalidOperationException: Collection was modified (at List`1.Enumerator.MoveNext <- LogBufferingFilterRuleSelector.Select <- GlobalBuffer.TryEnqueue)"
+    },
+    {
+      "cmd": "WITHOUT fix, tfm in net9.0 net10.0: dotnet artifacts/bin/Microsoft.AspNetCore.Diagnostics.Middleware.Tests/Debug/<tfm>/Microsoft.AspNetCore.Diagnostics.Middleware.Tests.dll --filter-class '*.PerIncomingRequestLoggingBuilderExtensionsTests' --report-trx ... --results-directory .scout/logs/without-fix/Microsoft.AspNetCore.Diagnostics.Middleware.Tests",
+      "result": "fail",
+      "output_tail": "net9.0:\nfailed PerRequestRules_AreNotAffectedByGlobalRules\nfailed CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel\nfailed WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow\nfailed CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel\ntotal: 10\nfailed: 4\nsucceeded: 6\nnet10.0:\nfailed PerRequestRules_AreNotAffectedByGlobalRules\nfailed CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel\nfailed CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel\nfailed WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow\ntotal: 10\nfailed: 4\nsucceeded: 6\nPerRequestRules_AreNotAffectedByGlobalRules and CategorySpecificRule_AppliesAfter...: Actual [\"not buffered\",\"buffered\"]; CategorySpecificRule_DoesNotApply...: Actual []; WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow: System.InvalidOperationException: Collection was modified (at LogBufferingFilterRuleSelector.Select <- IncomingRequestLogBuffer.TryEnqueue)"
+    },
+    {
+      "cmd": "git checkout scout/extensions-7486-buffer-rule-cache -- . && ./build.sh > .scout/logs/restored/build.log",
+      "result": "pass",
+      "output_tail": "    0 Error(s)\n\nTime Elapsed 00:02:02.49"
+    },
+    {
+      "cmd": "WITH fix restored, tfm in net9.0 net10.0: Microsoft.Extensions.Telemetry.Tests --filter-class '*.GlobalBufferLoggerBuilderExtensionsTests' '*.LogBufferingFilterRuleTests'; Microsoft.AspNetCore.Diagnostics.Middleware.Tests --filter-class '*.PerIncomingRequestLoggingBuilderExtensionsTests' (TRX in .scout/logs/restored/)",
+      "result": "pass",
+      "output_tail": "Telemetry.Tests net9.0/net10.0: total 12 failed 0 succeeded 12\nMiddleware.Tests net9.0/net10.0: total 10 failed 0 succeeded 10"
+    },
+    {
+      "cmd": "Determinism (with fix, net9.0 and net10.0): the 7 gated test cases 2 more times each; WhenConfigUpdatedWhileSelectingRule_DoesNotThrow and WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow 20 times each (--filter-method); summary in .scout/logs/determinism/summary.txt",
+      "result": "pass",
+      "output_tail": "88 runs, all 'failed: 0': 8 gated runs (3/3 and 4/4 succeeded) + 80 race runs (1/1 succeeded)"
+    },
+    {
+      "cmd": "dotnet build eng/Tools/ApiChief && ApiChief.dll artifacts/bin/<lib>/Debug/net10.0/<lib>.dll emit baseline -o <tmp> && diff against src/Libraries/<lib>/<lib>.json (lib = Microsoft.Extensions.Telemetry, Microsoft.AspNetCore.Diagnostics.Middleware)",
+      "result": "pass",
+      "output_tail": "Only differences: the assembly Version string in the header (10.0.0.0/10.5.0.0 committed vs 10.10.0.0 local build) and one trailing-whitespace difference on PerRequestLogBufferingOptions.Rules in the committed Middleware baseline. Both come from BASE. No API member added, removed or changed."
+    },
+    {
+      "cmd": "python3 check-test-output.py --with-fix .scout/logs/with-fix --without-fix .scout/logs/without-fix --new-tests \"CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel,CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel,WhenConfigUpdatedWhileSelectingRule_DoesNotThrow,PerRequestRules_AreNotAffectedByGlobalRules,WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow\"",
+      "result": "pass",
+      "output_tail": "with fix: 6 trx, total=1571 executed=1571 passed=1571 failed=0 error=0 timeout=0 aborted=0\n  CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel: with fix ['Passed', 'Passed', 'Passed', 'Passed'] | without fix ['Failed', 'Failed', 'Failed', 'Failed']\n  CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel: with fix ['Passed', 'Passed', 'Passed', 'Passed'] | without fix ['Failed', 'Failed', 'Failed', 'Failed']\n  WhenConfigUpdatedWhileSelectingRule_DoesNotThrow: with fix ['Passed', 'Passed'] | without fix ['Failed', 'Failed']\n  PerRequestRules_AreNotAffectedByGlobalRules: with fix ['Passed', 'Passed'] | without fix ['Failed', 'Failed']\n  WhenOtherRequestEndsWhileSelectingRule_DoesNotThrow: with fix ['Passed', 'Passed'] | without fix ['Failed', 'Failed']\n\nOUTPUT GATE: PASS"
+    }
+  ],
+  "fail_reason": null
+}

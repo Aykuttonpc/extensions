@@ -1,0 +1,32 @@
+{
+  "issue": "dotnet/extensions#7383",
+  "source": "page",
+  "url": "https://github.com/dotnet/extensions/issues/7383",
+  "title": "Thread-safety bug: `LogBufferingFilterRuleSelector.Select` races with `InvalidateCache`, causing `InvalidOperationException - Collection was modified; enumeration operation may not execute`",
+  "state": "open",
+  "author": "?",
+  "assignees": [],
+  "labels": [
+    "area-telemetry",
+    "bug",
+    "untriaged"
+  ],
+  "milestone": null,
+  "thumbs_up": 0,
+  "comments_total": 0,
+  "comments_read": 0,
+  "comments": [],
+  "claims": [],
+  "linked_prs": [],
+  "maintainer_guidance": [],
+  "events": [],
+  "mechanical_stops": [],
+  "verifier_note": "api.github.com and github.com are 403 in this sandbox; the r.jina.ai markdown view held only the issue body, so the page was re-read as HTML (r.jina.ai X-Return-Format: html) and the embedded GraphQL payload was parsed: state OPEN, assignedActors [], closedByPullRequestsReferences [], 'No one assigned', 'No branches or pull requests', timeline hasNextPage=false with all items loaded, no IssueComment and no cross-referenced PR items.",
+  "timeline_total": 4,
+  "timeline_events": [
+    "2026-03-10 labeled bug/untriaged/area-telemetry by Sorttech, github-actions",
+    "2026-03-10 renamed title by Sorttech"
+  ],
+  "decision": "go",
+  "checked_at": "2026-09-27"
+}

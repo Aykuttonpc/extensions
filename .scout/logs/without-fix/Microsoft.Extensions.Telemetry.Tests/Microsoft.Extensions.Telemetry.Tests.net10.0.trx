@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="8d133afa-6bcb-4c03-a093-fe0c9b4c250d" name="@vm 2026-09-27 02:59:04.1546164" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-27T02:59:03.5971689Z" queuing="2026-09-27T02:59:03.5971689Z" start="2026-09-27T02:59:03.5971689Z" finish="2026-09-27T02:59:04.1552318Z" />
+  <TestSettings name="default" id="431c464f-1b21-40ea-9723-44ab9df36099">
+    <Deployment runDeploymentRoot="_vm_2026-09-27_02_59_04.1546164" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="bb898272-1f4a-4028-a4e7-2f9452480524" testId="0487370f-6535-8b98-a256-b33a5920409d" testName="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdated_AppliesNewRulesToSubsequentLogs" computerName="vm" duration="00:00:00.1261528" startTime="2026-09-27T02:59:03.9117032+00:00" endTime="2026-09-27T02:59:04.0500524+00:00" testType="13CDC9D9-DDB5-4fa4-A97D-D965CCFC6D4B" outcome="Passed" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" relativeResultsDirectory="bb898272-1f4a-4028-a4e7-2f9452480524" />
+    <UnitTestResult executionId="8c604eb1-1288-4d25-9267-ee23a37204d9" testId="31960115-e154-b8d9-0877-789a419cf991" testName="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WithConfiguration_RegistersInDI" computerName="vm" duration="00:00:00.0211568" startTime="2026-09-27T02:59:04.0595723+00:00" endTime="2026-09-27T02:59:04.0809933+00:00" testType="13CDC9D9-DDB5-4fa4-A97D-D965CCFC6D4B" outcome="Passed" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" relativeResultsDirectory="8c604eb1-1288-4d25-9267-ee23a37204d9" />
+    <UnitTestResult executionId="3462bb75-66ab-49c2-80dd-22652b5e8f7d" testId="fa850287-be5c-dce4-b1d4-c52ecb4f31d4" testName="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdated_PicksUpConfigChanges" computerName="vm" duration="00:00:00.0056564" startTime="2026-09-27T02:59:04.0813363+00:00" endTime="2026-09-27T02:59:04.0870558+00:00" testType="13CDC9D9-DDB5-4fa4-A97D-D965CCFC6D4B" outcome="Passed" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" relativeResultsDirectory="3462bb75-66ab-49c2-80dd-22652b5e8f7d" />
+    <UnitTestResult executionId="9076cf55-abc5-4ca6-989d-9f16fbf71a6a" testId="faae52ad-2c55-8e81-4c3c-94c4fa4a31ad" testName="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdatedWhileSelectingRule_DoesNotThrow" computerName="vm" duration="00:00:00.0160810" startTime="2026-09-27T02:59:04.0873458+00:00" endTime="2026-09-27T02:59:04.1084911+00:00" testType="13CDC9D9-DDB5-4fa4-A97D-D965CCFC6D4B" outcome="Failed" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" relativeResultsDirectory="9076cf55-abc5-4ca6-989d-9f16fbf71a6a">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Null() Failure: Value is not null
+Expected: null
+Actual:   System.InvalidOperationException: Collection was modified; enumeration operation may not execute.
+   at System.Collections.Generic.List`1.Enumerator.MoveNext()
+   at Microsoft.Extensions.Diagnostics.Buffering.LogBufferingFilterRuleSelector.Select(IList`1 rules, LogLevel logLevel, EventId eventId, IReadOnlyList`1 attributes) in /work/extensions/src/Libraries/Microsoft.Extensions.Telemetry/Buffering/LogBufferingFilterRuleSelector.cs:line 86
+   at Microsoft.Extensions.Diagnostics.Buffering.GlobalBuffer.TryEnqueue[TState](LogEntry`1 logEntry) in /work/extensions/src/Libraries/Microsoft.Extensions.Telemetry/Buffering/GlobalBuffer.cs:line 87
+   at Microsoft.Extensions.Diagnostics.Buffering.GlobalLogBufferManager.TryEnqueue[TState](IBufferedLogger bufferedLogger, LogEntry`1&amp; logEntry) in /work/extensions/src/Libraries/Microsoft.Extensions.Telemetry/Buffering/GlobalLogBufferManager.cs:line 63
+   at Microsoft.Extensions.Logging.ExtendedLogger.LegacyPath[TState](LogLevel logLevel, EventId eventId, TState state, Exception exception, Func`3 formatter) in /work/extensions/src/Libraries/Microsoft.Extensions.Telemetry/Logging/ExtendedLogger.cs:line 460
+   at Microsoft.Extensions.Logging.ExtendedLogger.Log[TState](LogLevel logLevel, EventId eventId, TState state, Exception exception, Func`3 formatter) in /work/extensions/src/Libraries/Microsoft.Extensions.Telemetry/Logging/ExtendedLogger.cs:line 64
+   at Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.&lt;&gt;c__DisplayClass5_0.&lt;WhenConfigUpdatedWhileSelectingRule_DoesNotThrow&gt;b__3() in /work/extensions/test/Libraries/Microsoft.Extensions.Telemetry.Tests/Buffering/GlobalBufferLoggerBuilderExtensionsTests.cs:line 252
+   at Xunit.Record.Exception(Action testCode) in /_/src/xunit.v3.core/Record.cs:line 30</Message>
+          <StackTrace>   at Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdatedWhileSelectingRule_DoesNotThrow() in /work/extensions/test/Libraries/Microsoft.Extensions.Telemetry.Tests/Buffering/GlobalBufferLoggerBuilderExtensionsTests.cs:line 255
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f9b27012-15c5-4fb4-ae0f-ac2b2f70a125" testId="82afeb29-99dc-9501-34e0-b8bb7d72773a" testName="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WithLogLevel_RegistersInDI" computerName="vm" duration="00:00:00.0014259" startTime="2026-09-27T02:59:04.1093147+00:00" endTime="2026-09-27T02:59:04.1107938+00:00" testType="13CDC9D9-DDB5-4fa4-A97D-D965CCFC6D4B" outcome="Passed" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" relativeResultsDirectory="f9b27012-15c5-4fb4-ae0f-ac2b2f70a125" />
+    <UnitTestResult executionId="926e8099-07fb-42f6-b53d-3a01685611c1" testId="dda30846-f2cf-56f0-83cd-badd08802b8d" testName="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenArgumentNull_Throws" computerName="vm" duration="00:00:00.0011941" startTime="2026-09-27T02:59:04.1110669+00:00" endTime="2026-09-27T02:59:04.1122987+00:00" testType="13CDC9D9-DDB5-4fa4-A97D-D965CCFC6D4B" outcome="Passed" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" relativeResultsDirectory="926e8099-07fb-42f6-b53d-3a01685611c1" />
+    <UnitTestResult executionId="7067190f-c0bc-4e10-861f-3b61142bed37" testId="12bb5cc6-1eef-d2b0-9557-86dd13f77324" testName="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel" computerName="vm" duration="00:00:00.0095502" startTime="2026-09-27T02:59:04.1124817+00:00" endTime="2026-09-27T02:59:04.1223613+00:00" testType="13CDC9D9-DDB5-4fa4-A97D-D965CCFC6D4B" outcome="Failed" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" relativeResultsDirectory="7067190f-c0bc-4e10-861f-3b61142bed37">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Collections differ
+Expected: &lt;generated&gt;                                ["not buffered"]
+Actual:   ArraySelectIterator&lt;FakeLogRecord, string&gt; ["not buffered", "buffered"]
+                                                                      ↑ (pos 1)</Message>
+          <StackTrace>   at Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel() in /work/extensions/test/Libraries/Microsoft.Extensions.Telemetry.Tests/Buffering/GlobalBufferLoggerBuilderExtensionsTests.cs:line 282
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c162dd47-3d30-4836-8510-d2bd53df991d" testId="f8c90f23-ac35-5a68-13f0-c5a3897c91c2" testName="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel" computerName="vm" duration="00:00:00.0017837" startTime="2026-09-27T02:59:04.1226990+00:00" endTime="2026-09-27T02:59:04.1246741+00:00" testType="13CDC9D9-DDB5-4fa4-A97D-D965CCFC6D4B" outcome="Failed" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" relativeResultsDirectory="c162dd47-3d30-4836-8510-d2bd53df991d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Collections differ
+                       ↓ (pos 0)
+Expected: &lt;generated&gt; ["not buffered"]
+Actual:   string[]    []</Message>
+          <StackTrace>   at Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel() in /work/extensions/test/Libraries/Microsoft.Extensions.Telemetry.Tests/Buffering/GlobalBufferLoggerBuilderExtensionsTests.cs:line 308
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdated_AppliesNewRulesToSubsequentLogs" storage="/work/extensions/artifacts/bin/microsoft.extensions.telemetry.tests/debug/net10.0/microsoft.extensions.telemetry.tests.dll" id="0487370f-6535-8b98-a256-b33a5920409d">
+      <Execution id="bb898272-1f4a-4028-a4e7-2f9452480524" />
+      <TestMethod codeBase="/work/extensions/artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll" adapterTypeName="executor://30ea7c6e-dd24-4152-a360-1387158cd41d/3.2.2" className="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests" name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdated_AppliesNewRulesToSubsequentLogs" />
+    </UnitTest>
+    <UnitTest name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WithConfiguration_RegistersInDI" storage="/work/extensions/artifacts/bin/microsoft.extensions.telemetry.tests/debug/net10.0/microsoft.extensions.telemetry.tests.dll" id="31960115-e154-b8d9-0877-789a419cf991">
+      <Execution id="8c604eb1-1288-4d25-9267-ee23a37204d9" />
+      <TestMethod codeBase="/work/extensions/artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll" adapterTypeName="executor://30ea7c6e-dd24-4152-a360-1387158cd41d/3.2.2" className="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests" name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WithConfiguration_RegistersInDI" />
+    </UnitTest>
+    <UnitTest name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdated_PicksUpConfigChanges" storage="/work/extensions/artifacts/bin/microsoft.extensions.telemetry.tests/debug/net10.0/microsoft.extensions.telemetry.tests.dll" id="fa850287-be5c-dce4-b1d4-c52ecb4f31d4">
+      <Execution id="3462bb75-66ab-49c2-80dd-22652b5e8f7d" />
+      <TestMethod codeBase="/work/extensions/artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll" adapterTypeName="executor://30ea7c6e-dd24-4152-a360-1387158cd41d/3.2.2" className="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests" name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdated_PicksUpConfigChanges" />
+    </UnitTest>
+    <UnitTest name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdatedWhileSelectingRule_DoesNotThrow" storage="/work/extensions/artifacts/bin/microsoft.extensions.telemetry.tests/debug/net10.0/microsoft.extensions.telemetry.tests.dll" id="faae52ad-2c55-8e81-4c3c-94c4fa4a31ad">
+      <Execution id="9076cf55-abc5-4ca6-989d-9f16fbf71a6a" />
+      <TestMethod codeBase="/work/extensions/artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll" adapterTypeName="executor://30ea7c6e-dd24-4152-a360-1387158cd41d/3.2.2" className="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests" name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenConfigUpdatedWhileSelectingRule_DoesNotThrow" />
+    </UnitTest>
+    <UnitTest name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WithLogLevel_RegistersInDI" storage="/work/extensions/artifacts/bin/microsoft.extensions.telemetry.tests/debug/net10.0/microsoft.extensions.telemetry.tests.dll" id="82afeb29-99dc-9501-34e0-b8bb7d72773a">
+      <Execution id="f9b27012-15c5-4fb4-ae0f-ac2b2f70a125" />
+      <TestMethod codeBase="/work/extensions/artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll" adapterTypeName="executor://30ea7c6e-dd24-4152-a360-1387158cd41d/3.2.2" className="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests" name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WithLogLevel_RegistersInDI" />
+    </UnitTest>
+    <UnitTest name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenArgumentNull_Throws" storage="/work/extensions/artifacts/bin/microsoft.extensions.telemetry.tests/debug/net10.0/microsoft.extensions.telemetry.tests.dll" id="dda30846-f2cf-56f0-83cd-badd08802b8d">
+      <Execution id="926e8099-07fb-42f6-b53d-3a01685611c1" />
+      <TestMethod codeBase="/work/extensions/artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll" adapterTypeName="executor://30ea7c6e-dd24-4152-a360-1387158cd41d/3.2.2" className="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests" name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.WhenArgumentNull_Throws" />
+    </UnitTest>
+    <UnitTest name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel" storage="/work/extensions/artifacts/bin/microsoft.extensions.telemetry.tests/debug/net10.0/microsoft.extensions.telemetry.tests.dll" id="12bb5cc6-1eef-d2b0-9557-86dd13f77324">
+      <Execution id="7067190f-c0bc-4e10-861f-3b61142bed37" />
+      <TestMethod codeBase="/work/extensions/artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll" adapterTypeName="executor://30ea7c6e-dd24-4152-a360-1387158cd41d/3.2.2" className="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests" name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_AppliesAfterOtherCategoryLoggedAtSameLevel" />
+    </UnitTest>
+    <UnitTest name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel" storage="/work/extensions/artifacts/bin/microsoft.extensions.telemetry.tests/debug/net10.0/microsoft.extensions.telemetry.tests.dll" id="f8c90f23-ac35-5a68-13f0-c5a3897c91c2">
+      <Execution id="c162dd47-3d30-4836-8510-d2bd53df991d" />
+      <TestMethod codeBase="/work/extensions/artifacts/bin/Microsoft.Extensions.Telemetry.Tests/Debug/net10.0/Microsoft.Extensions.Telemetry.Tests.dll" adapterTypeName="executor://30ea7c6e-dd24-4152-a360-1387158cd41d/3.2.2" className="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests" name="Microsoft.Extensions.Diagnostics.Buffering.Test.GlobalBufferLoggerBuilderExtensionsTests.CategorySpecificRule_DoesNotApplyToOtherCategoryLoggedAtSameLevel" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="0487370f-6535-8b98-a256-b33a5920409d" executionId="bb898272-1f4a-4028-a4e7-2f9452480524" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+    <TestEntry testId="31960115-e154-b8d9-0877-789a419cf991" executionId="8c604eb1-1288-4d25-9267-ee23a37204d9" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+    <TestEntry testId="fa850287-be5c-dce4-b1d4-c52ecb4f31d4" executionId="3462bb75-66ab-49c2-80dd-22652b5e8f7d" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+    <TestEntry testId="faae52ad-2c55-8e81-4c3c-94c4fa4a31ad" executionId="9076cf55-abc5-4ca6-989d-9f16fbf71a6a" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+    <TestEntry testId="82afeb29-99dc-9501-34e0-b8bb7d72773a" executionId="f9b27012-15c5-4fb4-ae0f-ac2b2f70a125" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+    <TestEntry testId="dda30846-f2cf-56f0-83cd-badd08802b8d" executionId="926e8099-07fb-42f6-b53d-3a01685611c1" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+    <TestEntry testId="12bb5cc6-1eef-d2b0-9557-86dd13f77324" executionId="7067190f-c0bc-4e10-861f-3b61142bed37" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+    <TestEntry testId="f8c90f23-ac35-5a68-13f0-c5a3897c91c2" executionId="c162dd47-3d30-4836-8510-d2bd53df991d" testListId="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8C84FA94-04C1-424b-9868-57A2D4851A1D" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="8" executed="8" passed="5" failed="3" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <RunInfos>
+      <RunInfo computerName="vm" outcome="Error" timestamp="2026-09-27T02:59:04.1637613">
+        <Text>Exit code indicates failure: '2'. Please refer to https://aka.ms/testingplatform/exitcodes for more information.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
